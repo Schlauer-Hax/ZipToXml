@@ -7,9 +7,12 @@ There are two options on using it:
 
 ### Using the prebuilt file
 1. Download the latest jar file from [Releases](https://github.com/Schlauer-Hax/ZipToXml/releases)
-2. Make sure you have installed Java 15 using ``java -version`` (download it [here](https://adoptopenjdk.net/?variant=openjdk15&jvmVariant=hotspot))   
-3. Put the zip files in the same directory as the jar file
-4. Run the jar File using java: ``java -jar ZipToXml.jar``
+2. Make sure you have installed Java 15 using ``java -version`` (download it [here](https://adoptopenjdk.net/?variant=openjdk15&jvmVariant=hotspot))
+3. Run the jar File using java: ``java -jar ZipToXml.jar``
+4. Put the zip file in the created IMS folder
+5. Run the jar File again: ``java -jar ZipToXml.jar``
+6. Use output files in Moodle folder for import
+7. Repeat steps 4 to 6 for every new file
 
 ### Using Maven to compile
 1. Clone the project
@@ -18,7 +21,10 @@ There are two options on using it:
 4. Compile the project using the ``mvn package`` command
 5. Copy the file out of the target folder   
 6. Run the jar File using java: ``java -jar ZipToXml.jar``
-
+7. Put the zip file in the created IMS folder
+8. Run the jar File again: ``java -jar ZipToXml.jar``
+9. Use output files in Moodle folder for import
+10. Repeat steps 7 to 9 for every new file
 
 ## License
 The ZipToXml tool is licensed under [GPLv3](https://github.com/Schlauer-Hax/ZipToXml/blob/master/LICENSE)
