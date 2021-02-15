@@ -25,8 +25,18 @@ public class Main {
      * Gets all Files with .zip ending in current directory and calls scan method on them.
      */
     public void main() {
+        File folder = new File("./IMS/");
+        if (!folder.exists()) {
+            folder.mkdir();
+        }
+
+        File folder2 = new File("./tmp/");
+        if (!folder2.exists()) {
+            folder2.mkdir();
+        }
+
         // Gets All Files in current folder
-        for (File file : Objects.requireNonNull(new File(".").listFiles())) {
+        for (File file : Objects.requireNonNull(folder.listFiles())) {
             // Checks if Filename end with .zip
             if (file.getName().endsWith(".zip")) {
                 // Starts the scan of the File
@@ -43,7 +53,7 @@ public class Main {
     public void scan(File file) {
         try {
             // Gets File as zip file
-            ZipFile zipFile = new ZipFile(file.getName());
+            ZipFile zipFile = new ZipFile(file.getPath());
 
             // Gets All Files inside the zip file
             ArrayList<? extends ZipEntry> entryList = Collections.list(zipFile.entries());
@@ -54,7 +64,7 @@ public class Main {
                 InputStream stream = zipFile.getInputStream(entryList.stream().filter(entry -> entry.getName().endsWith(".zip")).findAny().get());
 
                 // Writes zip file to new file in current directory
-                File targetFile = new File(file.getName() + "2");
+                File targetFile = new File("./tmp/" + file.getName() + "2");
                 FileOutputStream fos = new FileOutputStream(targetFile);
                 byte[] buffer = new byte[1024];
                 int len;
@@ -129,11 +139,13 @@ public class Main {
                                 Element element = (Element) elements.item(i);
 
                                 // Gets name of question
-                                question.setName(element.getAttribute("responseIdentifier"));
+                                question.setName(entry.getName());
 
                                 // Gets actual question
                                 question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                        .getElementsByTagName("imsqti:span").item(1).getTextContent());
+                                        .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                                        ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                                .getElementsByTagName("imsqti:span").item(1).getTextContent());
 
                                 // Sets type to single
                                 question.setType("2");
@@ -164,21 +176,30 @@ public class Main {
                                 question = new Question();
                             }
 
+                            File folder = new File("./Moodle/");
+                            if (!folder.exists()) folder.mkdir();
+
                             // Get file to write to
-                            File outfile = new File(zipFile.getName() + doc.getDocumentElement().getAttribute("identifier") + "-output.xml");
+                            File outfile = new File("./Moodle/" + new Random().nextInt() + "Fall-output.xml");
 
                             // Write questions to file
-                            Files.writeString(outfile.toPath(), getOutput(questions1, doc.getDocumentElement().getAttribute("title")));
+                            Files.writeString(outfile.toPath(), getOutput(questions1, doc.getDocumentElement().getAttribute("title") + "|" +
+                                    ((Element) doc.getDocumentElement().getElementsByTagName("imsqti:itemBody").item(0))
+                                            .getElementsByTagName("imsqti:p").item(0).getTextContent()));
                         } else {
                             // Gets question element
                             Element element = (Element) elements.item(0);
 
                             // Gets name of question
-                            question.setName(doc.getDocumentElement().getAttribute("title"));
+                            question.setName(entry.getName() + "|" + doc.getDocumentElement().getAttribute("title"));
 
                             // Gets actual question
                             question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                    .getElementsByTagName("imsqti:span").item(1).getTextContent());
+                                    .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                                    ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                            .getElementsByTagName("imsqti:span").item(1).getTextContent());
+
+                            checkImages(element, zipFile, question);
 
                             // Sets type to single
                             question.setType("2");
@@ -214,11 +235,15 @@ public class Main {
 
 
                         // Gets name of question
-                        question.setName(doc.getDocumentElement().getAttribute("title"));
+                        question.setName(entry.getName() + "|" + doc.getDocumentElement().getAttribute("title"));
 
                         // Gets actual question
                         question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                .getElementsByTagName("imsqti:span").item(1).getTextContent());
+                                .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                                ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                        .getElementsByTagName("imsqti:span").item(1).getTextContent());
+
+                        checkImages(element, zipFile, question);
 
                         // Sets type to kprim
                         question.setType("0");
@@ -248,7 +273,8 @@ public class Main {
                             Node answer = nList.item(i);
 
                             // Sets Solution
-                            question.setSolution(((question.getSolution() == null) ? "" : question.getSolution()) + mappingmap.get(((Element) answer).getAttribute("identifier")) + " ");
+                            question.setSolution(((question.getSolution() == null) ? "" : question.getSolution()) +
+                                    mappingmap.get(((Element) answer).getAttribute("identifier")) + " ");
 
                             // Adds answer to question
                             question.addAnswer(answer.getTextContent());
@@ -262,8 +288,11 @@ public class Main {
             // Checks if questions got added
             // In case there only were special ones which were exported to extra file
             if (questions.size() != 0) {
+                File folder = new File("./Moodle/");
+                if (!folder.exists()) folder.mkdir();
+
                 // Get file to write to
-                File outfile = new File(zipFile.getName() + "-output.xml");
+                File outfile = new File("./Moodle/" + new Random().nextInt() + "-output.xml");
 
                 // Write questions to file
                 Files.writeString(outfile.toPath(), getOutput(questions, "Prüfungsfragen"));
@@ -274,6 +303,63 @@ public class Main {
         } catch (ParserConfigurationException e) {
             e.printStackTrace();
         } catch (SAXException e) {
+            e.printStackTrace();
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        try {
+            zipFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        File folder = new File("./tmp/");
+        for (File file : folder.listFiles()) file.delete();
+        folder.delete();
+    }
+
+    public void checkImages(Element element, ZipFile zipFile, Question question) {
+        try {
+            NodeList images = ((Element) ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                    .getElementsByTagName("imsqti:span").item(1)).getElementsByTagName("imsqti:img");
+
+            if (images.getLength() > 0) {
+                for (int i = 0; i < images.getLength(); i++) {
+                    Element image = ((Element) images.item(i));
+                    String name = image.getAttribute("src");
+                    String newname = name.split("/")[1];
+                    String height = image.getAttribute("height");
+                    String width = image.getAttribute("width");
+
+                    InputStream stream = zipFile.getInputStream(zipFile.getEntry(name));
+
+                    // Writes png file to new file in current directory
+                    File targetFile = new File("./tmp/" + newname);
+                    FileOutputStream fos = new FileOutputStream(targetFile);
+                    byte[] buffer = new byte[1024];
+                    int len;
+                    while ((len = stream.read(buffer)) > 0) {
+                        fos.write(buffer, 0, len);
+                    }
+                    fos.close();
+
+                    FileInputStream fileInputStreamReader = new FileInputStream(targetFile);
+                    byte[] bytes = new byte[(int) targetFile.length()];
+                    fileInputStreamReader.read(bytes);
+
+                    String encodedFile = Base64.getEncoder().encodeToString(bytes);
+                    question.setQuestion(question.getQuestion() +
+                            "<img src=\"@@PLUGINFILE@@/" + newname + "\" alt=\"\" width=\"" + width + "\" height=\"" + height + "\" role=\"presentation\" " +
+                            "class=\"img-responsive atto_image_button_text-bottom\">");
+                    question.setFile(((question.getFile() != null) ? question.getFile() : "") +
+                            "<file name=\"" + newname + "\" path=\"/\" encoding=\"base64\">" +
+                            encodedFile + "</file>");
+                }
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -303,24 +389,49 @@ public class Main {
                     <category>
                         <text>$course$/top/%s</text>
                     </category>
-                </question>""".formatted(category));
+                </question>""".formatted((!category.equals("Prüfungsfragen") ? "Fall " : "") + category.split("\\|")[0])).append("\n\n");
+
+        if (!category.equals("Prüfungsfragen")) {
+            sb.append("  <question type=\"description\">\n" +
+                    "    <name>\n" +
+                    "      <text>Fall " + category.split("\\|")[0] + "</text>\n" +
+                    "    </name>\n" +
+                    "    <questiontext format=\"html\">\n" +
+                    "      <text><![CDATA[" + category.split("\\|")[1] + "]]></text>\n" +
+                    "    </questiontext>\n" +
+                    "    <generalfeedback format=\"html\">\n" +
+                    "      <text></text>\n" +
+                    "    </generalfeedback>\n" +
+                    "    <defaultgrade>0.0000000</defaultgrade>\n" +
+                    "    <penalty>0.0000000</penalty>\n" +
+                    "    <hidden>0</hidden>\n" +
+                    "  </question>\n\n");
+        }
 
         // Loops through questions
         for (Question question : questions) {
             // Checks if question is single
             if (question.getType().equals("2")) {
+                ArrayList<String> split = new ArrayList<>(Arrays.asList(question.getName().split("\\|")));
+
+                // Append Comment
+                sb.append("<!--" + split.get(0) + "-->\n");
+
                 // Appends Question Header
                 sb.append("<question type=\"multichoice\">\n");
 
                 // Appends name of question
-                sb.append("<name><text>").append(question.getName()).append("</text></name>").append("\n");
+                sb.append("<name><text>").append(category.equals("Prüfungsfragen") ? ((split.size() != 1) ? (String.join("|",
+                        split.subList(1, split.size()).toArray(String[]::new))) : question.getName()) :
+                        ("Fall " + category.split("\\|")[0] + " " + (questions.indexOf(question) + 1)))
+                        .append("</text></name>").append("\n");
 
                 // Appends question
                 sb.append("<questiontext format=\"html\"><text><![CDATA[").append(
                         question.getQuestion()
                                 .replaceAll("<neg>", "<strong>")
                                 .replaceAll("</neg>", "</strong>")
-                ).append("]]></text></questiontext>").append("\n");
+                ).append("]]></text>\n" + question.getFile() + "</questiontext>").append("\n");
 
                 // Appends stuff
                 sb.append("<defaultgrade>1.0000000</defaultgrade>\n");
@@ -349,11 +460,18 @@ public class Main {
                 }
                 sb.append("</question>\n\n");
             } else if (question.getType().equals("0")) {
+                ArrayList<String> split2 = new ArrayList<>(Arrays.asList(question.getName().split("\\|")));
+
+                // Append Comment
+                sb.append("<!--" + split2.get(0) + "-->\n");
+
                 // Appends Question Header
                 sb.append("<question type=\"kprime\">\n");
 
                 // Appends name of question
-                sb.append("<name><text>").append(question.getName()).append("</text></name>").append("\n");
+                sb.append("<name><text>").append((split2.size() != 1) ? String.join("|",
+                        split2.subList(1, split2.size()).toArray(String[]::new)) : question.getName())
+                        .append("</text></name>").append("\n");
 
                 // Appends question
                 sb.append("<questiontext format=\"html\"><text><![CDATA[").append(
@@ -413,6 +531,7 @@ public class Main {
         private ArrayList<String> answers; // Answers of Question
         private String type; // 0 = kprim, 2 = single
         private String solution; // Solution of Question
+        private String file;
 
         public Question() {
             this.answers = new ArrayList<>();
@@ -456,6 +575,14 @@ public class Main {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public String getFile() {
+            return file;
+        }
+
+        public void setFile(String file) {
+            this.file = file;
         }
     }
 
