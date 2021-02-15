@@ -53,14 +53,15 @@ public class Main {
                 // Gets Inputstream of zip file inside zip file
                 InputStream stream = zipFile.getInputStream(entryList.stream().filter(entry -> entry.getName().endsWith(".zip")).findAny().get());
 
-                // Reads zip file to buffer
-                byte[] buffer = new byte[stream.available()];
-                stream.read(buffer);
-
                 // Writes zip file to new file in current directory
                 File targetFile = new File(file.getName() + "2");
-                OutputStream outStream = new FileOutputStream(targetFile);
-                outStream.write(buffer);
+                FileOutputStream fos = new FileOutputStream(targetFile);
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = stream.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+                fos.close();
 
                 // Initializes new scan on created zip file
                 scan(targetFile);
