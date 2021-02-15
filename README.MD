@@ -12,10 +12,10 @@ There are two options on using it:
 4. Run the jar File using java: ``java -jar ZipToXml.jar``
 
 ### Using Maven to compile
-1. Download the latest jar file from [Releases](https://github.com/Schlauer-Hax/ZipToXml/releases)
+1. Clone the project
 2. Install the latest Maven [release](https://maven.apache.org/download.cgi)
 3. Make sure you have installed Java 15 using ``java -version`` (download it [here](https://adoptopenjdk.net/?variant=openjdk15&jvmVariant=hotspot))
-4. Compile the file using the ``mvn package`` command
+4. Compile the project using the ``mvn package`` command
 5. Copy the file out of the target folder   
 6. Run the jar File using java: ``java -jar ZipToXml.jar``
 
