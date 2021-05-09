@@ -30,11 +30,6 @@ public class Main {
             folder.mkdir();
         }
 
-        File folder2 = new File("./tmp/");
-        if (!folder2.exists()) {
-            folder2.mkdir();
-        }
-
         // Gets All Files in current folder
         for (File file : Objects.requireNonNull(folder.listFiles())) {
             // Checks if Filename end with .zip
@@ -51,6 +46,10 @@ public class Main {
      * @param file File ending with .zip
      */
     public void scan(File file) {
+        File folder2 = new File("./tmp/");
+        if (!folder2.exists()) {
+            folder2.mkdir();
+        }
         try {
             // Gets File as zip file
             ZipFile zipFile = new ZipFile(file.getPath());
@@ -522,7 +521,7 @@ public class Main {
         sb.append("</quiz>");
 
         // Returns output
-        return sb.toString();
+        return sb.toString().replace("&", "&amp;");
     }
 
     public class Question {
