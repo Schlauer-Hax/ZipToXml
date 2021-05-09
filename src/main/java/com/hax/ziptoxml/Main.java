@@ -521,7 +521,7 @@ public class Main {
         sb.append("</quiz>");
 
         // Returns output
-        return sb.toString().replace("&", "&amp;");
+        return sb.toString().replaceAll("&", "&amp;");
     }
 
     public class Question {
