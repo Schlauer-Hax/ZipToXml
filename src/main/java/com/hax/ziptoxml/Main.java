@@ -169,6 +169,8 @@ public class Main {
                                     // Adds answer to question
                                     question.addAnswer(answer.getTextContent());
                                 }
+                                checkImages(element, zipFile, question);
+
                                 // Adds question to extra list of questions
                                 questions1.add(question);
 
@@ -439,7 +441,7 @@ public class Main {
                         question.getQuestion()
                                 .replaceAll("<neg>", "<strong>")
                                 .replaceAll("</neg>", "</strong>")
-                ).append("]]></text>\n</questiontext>").append("\n");
+                ).append("]]></text>\n" + question.getFile() + "</questiontext>").append("\n");
 
                 // Appends stuff
                 sb.append("<defaultgrade>1.0000000</defaultgrade>\n");
@@ -486,7 +488,7 @@ public class Main {
                         question.getQuestion()
                                 .replaceAll("<neg>", "<strong>")
                                 .replaceAll("</neg>", "</strong>"))
-                        .append("]]></text></questiontext>").append("\n");
+                        .append("]]></text>\n" + question.getFile() + "</questiontext>").append("\n");
 
                 // Appends stuff
                 sb.append("<defaultgrade>2.0000000</defaultgrade>\n");
@@ -539,7 +541,7 @@ public class Main {
         private ArrayList<String> answers; // Answers of Question
         private String type; // 0 = kprim, 2 = single
         private String solution; // Solution of Question
-        private String file;
+        private String file = "";
 
         public Question() {
             this.answers = new ArrayList<>();
