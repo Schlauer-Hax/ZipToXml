@@ -141,8 +141,9 @@ public class Main {
                                 question.setName(entry.getName());
 
                                 // Gets actual question
-                                question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                        .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                                String firstpart = ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                        .getElementsByTagName("imsqti:span").item(0).getTextContent();
+                                question.setQuestion(firstpart + (firstpart.equals("") ? "" : "</br></br>") +
                                         ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
                                                 .getElementsByTagName("imsqti:span").item(1).getTextContent());
 
@@ -182,9 +183,15 @@ public class Main {
                             File outfile = new File("./Moodle/" + new Random().nextInt() + "Fall-output.xml");
 
                             // Write questions to file
-                            Files.writeString(outfile.toPath(), getOutput(questions1, doc.getDocumentElement().getAttribute("title") + "|" +
-                                    ((Element) doc.getDocumentElement().getElementsByTagName("imsqti:itemBody").item(0))
-                                            .getElementsByTagName("imsqti:p").item(0).getTextContent()));
+                            NodeList title = ((Element) doc.getDocumentElement().getElementsByTagName("imsqti:itemBody").item(0))
+                                    .getElementsByTagName("imsqti:p");
+                            if (title.getLength() == 0) {
+                                Files.writeString(outfile.toPath(), getOutput(questions1, doc.getDocumentElement().getAttribute("title") + "| "));
+                            } else {
+                                Files.writeString(outfile.toPath(), getOutput(questions1, doc.getDocumentElement().getAttribute("title") +
+                                        "|" + title.item(0).getTextContent()));
+                            }
+
                         } else {
                             // Gets question element
                             Element element = (Element) elements.item(0);
@@ -193,8 +200,9 @@ public class Main {
                             question.setName(entry.getName() + "|" + doc.getDocumentElement().getAttribute("title"));
 
                             // Gets actual question
-                            question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                    .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                            String firstpart = ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                    .getElementsByTagName("imsqti:span").item(0).getTextContent();
+                            question.setQuestion(firstpart + (firstpart.equals("") ? "" : "</br></br>") +
                                     ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
                                             .getElementsByTagName("imsqti:span").item(1).getTextContent());
 
@@ -237,8 +245,9 @@ public class Main {
                         question.setName(entry.getName() + "|" + doc.getDocumentElement().getAttribute("title"));
 
                         // Gets actual question
-                        question.setQuestion(((Element) element.getElementsByTagName("imsqti:prompt").item(0))
-                                .getElementsByTagName("imsqti:span").item(0).getTextContent() + "</br></br>" +
+                        String firstpart = ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
+                                .getElementsByTagName("imsqti:span").item(0).getTextContent();
+                        question.setQuestion(firstpart + (firstpart.equals("") ? "" : "</br></br>") +
                                 ((Element) element.getElementsByTagName("imsqti:prompt").item(0))
                                         .getElementsByTagName("imsqti:span").item(1).getTextContent());
 
@@ -430,7 +439,7 @@ public class Main {
                         question.getQuestion()
                                 .replaceAll("<neg>", "<strong>")
                                 .replaceAll("</neg>", "</strong>")
-                ).append("]]></text>\n" + question.getFile() + "</questiontext>").append("\n");
+                ).append("]]></text>\n</questiontext>").append("\n");
 
                 // Appends stuff
                 sb.append("<defaultgrade>1.0000000</defaultgrade>\n");
