@@ -30,7 +30,7 @@ function setCount(filename: string, count: number) {
 function checkData() {
     if (Object.entries(countdata).map(key => {
         return dataoutput[key[0]].length === key[1]
-    }).filter(val => val).length===zipfilecount) {
+    }).filter(val => val).length === zipfilecount) {
         setData(dataoutput)
         console.log(Object.entries(dataoutput).length)
     }
@@ -40,9 +40,9 @@ function readFiles(zipfiles: File[], passedfunction: any) {
     setData = passedfunction;
     zipfilecount = zipfiles.length
     zipfiles.forEach(zipfile => {
-        if (zipfile.type === 'application/x-zip-compressed') {
-            selectZip(zipfile);
-        }
+
+        selectZip(zipfile);
+
     })
 }
 
@@ -83,7 +83,11 @@ function generateText(text: string, filename: string) {
             receiveData(handleCloze(data), filename)
         }
     } else if (type === 'multiple') {
-        receiveData(handleMultiple(data), filename)
+        if (!Array.isArray(data['imsqti:assessmentItem']['imsqti:responseDeclaration'])) {
+            receiveData(handleMultiple(data), filename)
+        } else {
+            receiveData(handleMultipleCloze(data), filename)
+        }
     }
 }
 
@@ -183,9 +187,9 @@ function handleCloze(data: any) {
 }
 
 // TODO: Image Support
-// TODO: {ass to output
+// TODO: Pass to output
 function handleMultiple(data: any) {
-    return `
+    /*return `
       <question type="cloze">
         <name>
           <text>Kprime</text>
@@ -197,7 +201,7 @@ function handleMultiple(data: any) {
                 Copyright 2021 by Dominique Bauer.
                 Creative Commons CC0 1.0 Universal Public Domain Dedication.
                 -->
-        
+
                 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
@@ -206,14 +210,11 @@ function handleMultiple(data: any) {
                         document.querySelector("table.answer td").css.width = "90px";
                     });
                 </script>
-        
+
                 <h3 style="margin-top:5px;">
                     Simulate the Kprime question type
                 </h3>
                 <br>
-                <p>
-                    Note: The correct answers are "No No Yes Yes No".
-                </p>
                 <table>
                     <tr>
                         <td>
@@ -225,10 +226,9 @@ function handleMultiple(data: any) {
                     ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:matchInteraction']['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice'].map((answer: any) =>
         `<tr>
                         <td>${answer._text}</td>
-                        <td>{1:MCH:&nbsp;~${data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value'].filter((check: any) =>
+                        ${data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value'].filter((check: any) =>
             check._text.split(" ")[0] === answer._attributes.identifier
-        )[0]._text.split(' ')[1] === 'richtig' ? '' : '='}&nbsp;}
-                        </td>
+        )[0]._text.split(' ')[1] === 'richtig' ? '<td>{1:MCH:~%-100%&nbsp;~%100%&nbsp;}</td>' : '<td>{1:MCH:~%100%&nbsp;~%-100%&nbsp;}</td>'}
                     </tr>
                     `
     ).join('')}
@@ -243,7 +243,14 @@ function handleMultiple(data: any) {
         <hidden>0</hidden>
         <idnumber>question_20210726_1235</idnumber>
       </question>
+    `*/
+    return `
+    
     `
+}
+
+function handleMultipleCloze(data: any) {
+
 }
 
 export default readFiles;
