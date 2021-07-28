@@ -192,18 +192,20 @@ function handleClozes(data: any) {
         </name>
         <questiontext format="html">
           <text><![CDATA[
+            <u>Fallbeschreibung mit ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].length} Teilfragen:</u>
+            </br>
             ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']?._text}
             </br>
             </br>
     ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map((responseDeclaration: any, index: number) => {
         if (responseDeclaration._attributes.cardinality === 'multiple') {
             return `
-        <u>Frage ${index + 1}:</u></br></br>
+        <u>Teilfrage ${index + 1}:</u></br></br>
         ${handleMultipleCloze(data, responseDeclaration._attributes.identifier)}
         </br>`
         } else if (responseDeclaration._attributes.cardinality === 'single') {
             return `
-        <u>Frage ${index + 1}:</u></br></br>
+        <u>Teilfrage ${index + 1}:</u></br></br>
         ${handleSingleCloze(data, responseDeclaration._attributes.identifier)}
         </br>`
         }
@@ -229,7 +231,7 @@ function handleSingleCloze(data: any, id: any) {
     return `
         <p dir="ltr" style="text-align: left;">
             ${choiceInteraction['imsqti:prompt']['imsqti:span'][1]._text}
-            <br>(Bitte kreuzen Sie <b>eine</b> Antwort an!)
+            <br>(Bitte kreuzen Sie eine Antwort an!)
         </p>
         <p dir="ltr" style="text-align: left;">
             {1:MCVS:${choiceInteraction['imsqti:simpleChoice'].map((choice: any) => `~${choice._attributes.identifier === correctResponseId ? '%100%' : ''}&amp;nbsp;&amp;nbsp;${choice._text}`).join('')}}<br>
@@ -326,7 +328,7 @@ function handleMultipleCloze(data: any, id: any) {
     
     ${questionText}
     </br>
-    (Bitte entscheiden Sie bei <b>jeder</b> Aussage, ob diese zutrifft oder nicht!)
+    (Bitte entscheiden Sie bei jeder Aussage, ob diese zutrifft oder nicht!)
     </br>
     </br>
     
