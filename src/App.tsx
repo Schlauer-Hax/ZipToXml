@@ -8,7 +8,6 @@ import {Button} from "@material-ui/core";
 function App() {
     const onDrop = useCallback(acceptedFiles => {
         // Do something with the files
-        console.log(acceptedFiles)
         readFiles(acceptedFiles, setData)
     }, [])
     const [data, setData] = useState([])
@@ -16,9 +15,10 @@ function App() {
 
     return (
         <div className="App">
+
             <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo"/>
                 <div {...getRootProps()}>
+                    <img src={logo} className="App-logo" alt="logo"/>
                     <input {...getInputProps()} />
                     {
                         isDragActive ?
@@ -32,28 +32,14 @@ function App() {
                     disabled={Object.entries(data).length === 0}
                     onClick={
                         () => {
-                            Object.entries(data).map((key: any) =>
-                                `<quiz><question type="category">
-                                    <category>
-                                        <text>$course$/top</text>
-                                    </category>
-                                </question>
-                                <question type="category">
-                                    <category>
-                                        <text>$course$/top/${key[0]}</text>
-                                    </category>
-                                </question>${key[1].join('')}</quiz>
-                                `).forEach((text: string, index: number) => {
-
+                            Object.entries(data).forEach((obj: any) => {
                                 const element = document.createElement("a");
-                                const file = new Blob([text], {type: 'text/plain'});
+                                const file = new Blob([obj[1]], {type: 'text/plain'});
                                 element.href = URL.createObjectURL(file);
-                                element.download = index + ".xml";
+                                element.download = obj[0].replace('.zip', '') + ".xml";
                                 document.body.appendChild(element); // Required for this to work in FireFox
                                 element.click()
                             })
-
-
                         }
                     }
                 >Download</Button>
