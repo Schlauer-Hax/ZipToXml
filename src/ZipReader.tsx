@@ -164,7 +164,7 @@ ${answers.map((answer: any, index: number) =>
                 <feedbacktext format="html"><text></text></feedbacktext>
             </row>`
     ).join('\n')}
-${['Richtig', 'Falsch'].map((text: string, index: number) =>
+${['Ja', 'Nein'].map((text: string, index: number) =>
         `            <column number="${index + 1}">
                 <responsetext format="moodle_auto_format">
                     <text>${text}</text>
@@ -353,7 +353,7 @@ function handleMultipleCloze(data: any, id: any) {
         </tr>`
     ).join('\n')}
     </table>
-    <span id="mf${random}-kprime">${kprimCode}</span>`
+    <span id="mf${random}-kprime">${kprimCode}</span></br></br>`
 }
 
 function calcKprimCode(input: string) {
