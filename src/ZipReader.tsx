@@ -98,8 +98,8 @@ function handleSingle(data: any) {
         </name>
         <questiontext format="html">
             <text>
-                <![CDATA[${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction']['imsqti:prompt']['imsqti:span']
-        .map((span: any) => span._text).filter((val: any) => val).join('\n\n').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>')}]]></text>
+                <![CDATA[${fixQuestion(data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction']['imsqti:prompt']['imsqti:span']
+        .map((span: any) => span._text).filter((val: any) => val).join('\n\n').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>'))}]]></text>
         </questiontext>
         <defaultgrade>1.0000000</defaultgrade>
         <penalty>0.3333333</penalty>
@@ -142,10 +142,10 @@ function handleMultiple(data: any) {
     return `
         <question type="kprime">
             <name>
-                <text>${data['imsqti:assessmentItem']._attributes.title}</text>
+                <text>${(data['imsqti:assessmentItem']._attributes.title)}</text>
             </name>
             <questiontext format="html">
-                <text><![CDATA[${question}]]></text>
+                <text><![CDATA[${fixQuestion(question)}]]></text>
             </questiontext>
             <defaultgrade>2.0000000</defaultgrade>
             <penalty>0.3333333</penalty>
@@ -230,7 +230,7 @@ function handleSingleCloze(data: any, id: any) {
     }
     return `
         <p dir="ltr" style="text-align: left;">
-            ${choiceInteraction['imsqti:prompt']['imsqti:span'][1]._text}
+            ${fixQuestion(choiceInteraction['imsqti:prompt']['imsqti:span'][1]._text)}
             <br>(Bitte kreuzen Sie eine Antwort an!)
         </p>
         <p dir="ltr" style="text-align: left;">
@@ -326,7 +326,7 @@ function handleMultipleCloze(data: any, id: any) {
     }
     </script>
     
-    ${questionText}
+    ${fixQuestion(questionText)}
     </br>
     (Bitte entscheiden Sie bei jeder Aussage, ob diese zutrifft oder nicht!)
     </br>
@@ -354,6 +354,19 @@ function handleMultipleCloze(data: any, id: any) {
     ).join('\n')}
     </table>
     <span id="mf${random}-kprime">${kprimCode}</span></br></br>`
+}
+
+function fixQuestion(question: string) {
+    const list = ['nicht', 'kein', 'wenigsten']
+    const split = question.split('.');
+    split[split.length-1] = split[split.length-1].split(' ').map(word => {
+        if (list.filter(listword => word.includes(listword)).length===1)
+            return '<b>'+word+'</b>'
+        else
+            return word
+    }).join(' ')
+
+    return split.join('.')
 }
 
 function calcKprimCode(input: string) {
