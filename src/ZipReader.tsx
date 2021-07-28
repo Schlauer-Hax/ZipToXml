@@ -28,6 +28,7 @@ function setCount(filename: string, count: number) {
 }
 
 function checkData() {
+    setData(dataoutput)
     if (Object.entries(countdata).map(key => {
         return dataoutput[key[0]].length === key[1]
     }).filter(val => val).length === zipfilecount) {
@@ -68,6 +69,7 @@ function readZip(zip: JSZip, fileName: any) {
     })
 }
 
+// TODO: Image Support
 function generateText(text: string, filename: string) {
     const data = JSON.parse(convert.xml2json(text, {compact: true}));
     let type;
@@ -76,23 +78,17 @@ function generateText(text: string, filename: string) {
     } else {
         type = data['imsqti:assessmentItem']['imsqti:responseDeclaration'][0]._attributes.cardinality;
     }
-    if (type === 'single') {
+    if (Array.isArray(data['imsqti:assessmentItem']['imsqti:responseDeclaration'])) {
+        receiveData(handleClozes(data), filename)
+    } else if (type === 'single') {
         if (data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'].length === undefined) {
             receiveData(handleSingle(data), filename)
-        } else {
-            receiveData(handleCloze(data), filename)
         }
     } else if (type === 'multiple') {
-        if (!Array.isArray(data['imsqti:assessmentItem']['imsqti:responseDeclaration'])) {
-            receiveData(handleMultiple(data), filename)
-        } else {
-            receiveData(handleMultipleCloze(data), filename)
-        }
+        receiveData(handleMultiple(data), filename)
     }
 }
 
-// TODO: Image Support
-// TODO: Pass to output
 function handleSingle(data: any) {
     return `
     <question type="multichoice">
@@ -131,126 +127,225 @@ function handleSingle(data: any) {
     </question>`
 }
 
-// TODO: Image Support
-// TODO: Pass to output
-function handleCloze(data: any) {
+function handleMultiple(data: any) {
     return `
-<!-- question: 9233  -->
-  <question type="cloze">
-    <name>
-      <text>Fall ${data['imsqti:assessmentItem']._attributes.title}</text>
-    </name>
-    <questiontext format="html">
-      <text>
-        <![CDATA[
-            <p dir="ltr" style="text-align: left;">
-                ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']._text}
-                <br>
-            </p>
-            <p dir="ltr" style="text-align: left;">
-                (Die folgenden 4 Fragen beziehen sich auf obigen Fall.)
-                <br>
-            </p>
-            ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'].map((question: any) =>
-        `
-                    <p dir="ltr" style="text-align: left;">
-                        <br>
-                    </p>            
-                    <p dir="ltr" style="text-align: left;">
-                        <strong>Frage ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'].indexOf(question) + 1}:</strong>
-                    </p>
-                    <p dir="ltr" style="text-align: left;">
-                        ${question['imsqti:prompt']['imsqti:span'][1]._text}
-                    </p>
-                    <p dir="ltr" style="text-align: left;">
-                        Wählen Sie eine Antwort:
-                        <br>
-                    </p>
-                    <p dir="ltr" style="text-align: left;">
-                        {1:MCVS:${question['imsqti:simpleChoice'].map((answer: any) =>
-            `~${data['imsqti:assessmentItem']['imsqti:responseDeclaration'][data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'].indexOf(question)]['imsqti:correctResponse']['imsqti:value']._text === answer._attributes.identifier ? '%100%' : ''}&amp;nbsp;&amp;nbsp;${answer._text}`
-        ).join('')}}
-                        <br>
-                    </p>
-                `
-    ).join('')}
-            ]]></text>
-    </questiontext>
-    <generalfeedback format="html">
-      <text></text>
-    </generalfeedback>
-    <penalty>0.3333333</penalty>
-    <hidden>0</hidden>
-    <idnumber></idnumber>
-  </question>
-`
+    
+    `
 }
 
-// TODO: Image Support
-// TODO: Pass to output
-function handleMultiple(data: any) {
-    /*return `
-      <question type="cloze">
+function handleClozes(data: any) {
+    const output = `
+    <question type="cloze">
         <name>
-          <text>Kprime</text>
+          <text>Fall ${data['imsqti:assessmentItem']._attributes.title}</text>
         </name>
         <questiontext format="html">
-          <text>
-              <![CDATA[
-                <!--
-                Copyright 2021 by Dominique Bauer.
-                Creative Commons CC0 1.0 Universal Public Domain Dedication.
-                -->
-
-                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        document.querySelector("table.answer").css.border = "none";
-                        document.querySelector("table.answer tr").css.border = "none";
-                        document.querySelector("table.answer td").css.width = "90px";
-                    });
-                </script>
-
-                <h3 style="margin-top:5px;">
-                    Simulate the Kprime question type
-                </h3>
-                <br>
-                <table>
-                    <tr>
-                        <td>
-                        </td>
-                        <td style="width:180px;font-weight:bold;">
-                            &nbsp;Yes &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; No
-                        </td>
-                    </tr>
-                    ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:matchInteraction']['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice'].map((answer: any) =>
-        `<tr>
-                        <td>${answer._text}</td>
-                        ${data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value'].filter((check: any) =>
-            check._text.split(" ")[0] === answer._attributes.identifier
-        )[0]._text.split(' ')[1] === 'richtig' ? '<td>{1:MCH:~%-100%&nbsp;~%100%&nbsp;}</td>' : '<td>{1:MCH:~%100%&nbsp;~%-100%&nbsp;}</td>'}
-                    </tr>
-                    `
-    ).join('')}
-                </table>
-            ]]>
-        </text>
+          <text><![CDATA[
+            ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']._text}
+            </br>
+            </br>
+            ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map((responseDeclaration: any, index: number) => {
+        if (responseDeclaration._attributes.cardinality === 'multiple') {
+            return `<u>Frage ${index + 1}:</u></br></br>(Bitte entscheiden Sie bei <b>jeder</b> Aussage, ob diese zutrifft oder nicht!)
+                    </br></br>${handleMultipleCloze(data, responseDeclaration._attributes.identifier)}</br>`
+        } else if (responseDeclaration._attributes.cardinality === 'single') {
+            return `<u>Frage ${index + 1}:</u></br></br>(Bitte kreuzen Sie <b>eine</b> Antwort an!)
+                    </br></br>${handleSingleCloze(data, responseDeclaration._attributes.identifier)}</br>`
+        }
+        return '';
+    }).join('\n')}]]></text>
         </questiontext>
         <generalfeedback format="moodle_auto_format">
           <text></text>
         </generalfeedback>
         <penalty>0.3333333</penalty>
         <hidden>0</hidden>
-        <idnumber>question_20210726_1235</idnumber>
-      </question>
-    `*/
-    return `
-    
-    `
+    </question>`
+    return output;
 }
 
-function handleMultipleCloze(data: any) {
+function handleSingleCloze(data: any, id: any) {
+    return ``
+}
 
+function handleMultipleCloze(data: any, id: any) {
+    const correctResponseIds = data['imsqti:assessmentItem']['imsqti:responseDeclaration'].filter((response: any) =>
+        response._attributes.identifier === id
+    )[0]['imsqti:correctResponse']['imsqti:value'].map((obj: any) => obj._text);
+    let matchInteraction = data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:matchInteraction']
+    if (Array.isArray(matchInteraction)) {
+        matchInteraction = matchInteraction.filter(interaction =>
+            interaction._attributes.responseIdentifier === id
+        )[0]
+    }
+    const answers = matchInteraction['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice']
+        .map((obj: any) => [
+            obj._text,
+            correctResponseIds.filter((correct: any) => correct.split(" ")[0] === obj._attributes.identifier)[0].split(" ")[1] === 'richtig'
+        ])
+    const random = Math.round(Math.random() * 1000000);
+    const questionText = matchInteraction['imsqti:prompt']['imsqti:span'][1]._text;
+    const kprimCode = calcKprimCode(answers.map((obj: any) => obj[1] ? 1 : 0).join(''))
+
+    const output = `
+    <!--
+    Copyright 2021 by Dominique Bauer.
+    Creative Commons CC0 1.0 Universal Public Domain Dedication.
+    -->
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $("table.answer").css("border","none");
+        $("table.answer tr").css("border","none");
+        $("table.answer td").css("width","90px");
+        $("#mf${random}-kprime input").hide();
+    
+        // RETRIEVE TEMPORARILY STORED CHECKED RADIO BUTTONS
+        // REQUIRED WHEN NOT ALL CHOICES ARE SELECTED
+        var rkp1 = sessionStorage.getItem("${random}kp1");
+        var rkp2 = sessionStorage.getItem("${random}kp2");
+        var rkp3 = sessionStorage.getItem("${random}kp3");
+        var rkp4 = sessionStorage.getItem("${random}kp4");
+        $("input[name=mf${random}-kprime1][value="+rkp1+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime2][value="+rkp2+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime3][value="+rkp3+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime4][value="+rkp4+"]").prop("checked", true);
+    
+        // RETRIEVE PERMANENTLY SAVED ANSWER
+        var mfAns = $("#mf${random}-kprime input").val();
+        var mfAnss = mfAns.toString();
+        var akp1 = mfAnss.slice(0,1);
+        var akp2 = mfAnss.slice(1,2);
+        var akp3 = mfAnss.slice(2,3);
+        var akp4 = mfAnss.slice(3,4);
+    
+        var akpn = parseInt(akp1) + parseInt(akp2) + parseInt(akp3) + parseInt(akp4);
+        if (Number.isInteger(akpn)) {
+            $("#mf${random}-kprime input").val(mfAns);
+            sessionStorage.clear();
+        }
+    
+        $("input[name=mf${random}-kprime1][value="+akp1+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime2][value="+akp2+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime3][value="+akp3+"]").prop("checked", true);
+        $("input[name=mf${random}-kprime4][value="+akp4+"]").prop("checked", true);
+    });
+    
+    function mf${random}Kprime() {
+        var kp1 = $("input:checked[name=mf${random}-kprime1]").val();
+        var kp2 = $("input:checked[name=mf${random}-kprime2]").val();
+        var kp3 = $("input:checked[name=mf${random}-kprime3]").val();
+        var kp4 = $("input:checked[name=mf${random}-kprime4]").val();
+    
+        // STORE TEMPORARILY CHECKED RADIO BUTTONS
+        sessionStorage.setItem("${random}kp1", kp1);
+        sessionStorage.setItem("${random}kp2", kp2);
+        sessionStorage.setItem("${random}kp3", kp3);
+        sessionStorage.setItem("${random}kp4", kp4);
+    
+        var kpn = parseInt(kp1) + parseInt(kp2) + parseInt(kp3) + parseInt(kp4);
+        var kps = kp1 + kp2 + kp3 + kp4;
+        if (Number.isInteger(kpn)) {
+            $("#mf${random}-kprime input").val(kps);
+            sessionStorage.clear();
+        }
+    }
+    </script>
+    
+    ${questionText}
+    </br>
+    </br>
+    
+    <table style="width:100%;" onchange="mf${random}Kprime()">
+        <tr>
+            <td style="width:30px;text-align:center;">
+                <b>Ja</b> 
+            </td>
+            <td style="width:30px;text-align:center;">
+                <b>Nein</b>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime1" value="1">
+            </td>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime1" value="0">
+            </td>
+            <td>${answers[0][0]}</td>
+        </tr>
+        <tr>
+                <td style="text-align:center;">
+                    <input type="radio" name="mf${random}-kprime2" value="1">
+                </td>
+                <td style="text-align:center;">
+                    <input type="radio" name="mf${random}-kprime2" value="0">
+                </td>
+            <td>${answers[1][0]}</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime3" value="1">
+            </td>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime3" value="0">
+            </td>
+            <td>${answers[2][0]}</td>
+        </tr>
+        <tr>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime4" value="1">
+            </td>
+            <td style="text-align:center;">
+                <input type="radio" name="mf${random}-kprime4" value="0">
+            </td>
+            <td>${answers[3][0]}</td>
+        </tr>
+    </table>
+    <span id="mf${random}-kprime">${kprimCode}</span>`
+    return output;
+}
+
+function calcKprimCode(input: string) {
+    const possibleSolutions = [
+        "0000",
+        "0001",
+        "0010",
+        "0011",
+        "0100",
+        "0101",
+        "0110",
+        "0111",
+        "1000",
+        "1001",
+        "1010",
+        "1011",
+        "1100",
+        "1101",
+        "1110",
+        "1111"
+    ]
+
+    let solutions: any = []
+    possibleSolutions.forEach(possibleSolution => {
+        let correct = 0
+        possibleSolution.split("").forEach((num, index) => {
+            if (input.split("")[index] === num) {
+                correct += 1
+            }
+        })
+        if (correct === 4) {
+            solutions.push([possibleSolution, 100])
+        } else if (correct === 3) {
+            solutions.push([possibleSolution, 50])
+        } else {
+            solutions.push([possibleSolution, 0])
+        }
+    })
+    return '{2:SA:' + solutions.map((solution: any) =>
+        `%${solution[1]}%${solution[0]}`
+    ).join("~") + '}';
 }
 
 export default readFiles;
