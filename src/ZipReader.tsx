@@ -159,7 +159,7 @@ function handleMultiple(data: any) {
 ${answers.map((answer: any, index: number) =>
         `            <row number="${index + 1}">
                 <optiontext format="html">
-                    <text><![CDATA[${answer}]]></text>
+                    <text><![CDATA[${answer[0]}]]></text>
                 </optiontext>
                 <feedbacktext format="html"><text></text></feedbacktext>
             </row>`
