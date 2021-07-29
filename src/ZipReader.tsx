@@ -78,7 +78,7 @@ async function generateText(text: string, filename: string, zip: JSZip) {
     const data = JSON.parse(convert.xml2json(text, {compact: true}));
     let type;
     if (Array.isArray(data['imsqti:assessmentItem']['imsqti:responseDeclaration'])) {
-        receiveData(handleClozes(data, zip), filename)
+        receiveData(await handleClozes(data, zip), filename)
     } else {
         type = data['imsqti:assessmentItem']['imsqti:responseDeclaration']._attributes.cardinality;
         if (type === 'single') {
