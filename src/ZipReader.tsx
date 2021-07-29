@@ -204,7 +204,7 @@ async function handleClozes(data: any, zip: JSZip) {
             ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']?._text}
             </br>
             </br>
-    ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map(async (responseDeclaration: any, index: number) => {
+    ${(await Promise.all(data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map(async (responseDeclaration: any, index: number) => {
         if (responseDeclaration._attributes.cardinality === 'multiple') {
             return `
         <u>Teilfrage ${index + 1}:</u></br></br>
@@ -225,7 +225,7 @@ async function handleClozes(data: any, zip: JSZip) {
         </br>`
         }
         return '';
-    }).join('\n')}]]></text>
+    }))).join('\n')}]]></text>
             ${files.join('\n')}
         </questiontext>
         <generalfeedback format="moodle_auto_format">
