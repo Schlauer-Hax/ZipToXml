@@ -35,7 +35,8 @@ function checkData() {
             <text>$course$/top/${key[0].replace('.zip', '')}</text>
         </category>
     </question>${key[1].join('')}
-    </quiz>`})
+    </quiz>`
+        })
         setData(output)
     }
 }
@@ -52,7 +53,7 @@ function selectZip(zipFile: File) {
             return file.name.endsWith('.zip')
         });
 
-        if (Object.entries(dataoutput).filter((obj: any) => obj[0]===zipFile.name).length===1) {
+        if (Object.entries(dataoutput).filter((obj: any) => obj[0] === zipFile.name).length === 1) {
             dataoutput[zipFile.name] = [];
             zipfilecount--;
         }
@@ -68,29 +69,30 @@ function readZip(zip: JSZip, fileName: any) {
     const files = zip.filter(file => file.startsWith("content/") && file.endsWith(".xml"));
     setCount(fileName, files.length)
     files.forEach(file => {
-        file.async("text").then(text => generateText(text, fileName))
+        file.async("text").then(text => generateText(text, fileName, zip))
     })
 }
 
 // TODO: Image Support
-function generateText(text: string, filename: string) {
+async function generateText(text: string, filename: string, zip: JSZip) {
     const data = JSON.parse(convert.xml2json(text, {compact: true}));
     let type;
     if (Array.isArray(data['imsqti:assessmentItem']['imsqti:responseDeclaration'])) {
-        receiveData(handleClozes(data), filename)
+        receiveData(handleClozes(data, zip), filename)
     } else {
         type = data['imsqti:assessmentItem']['imsqti:responseDeclaration']._attributes.cardinality;
         if (type === 'single') {
-            receiveData(handleSingle(data), filename)
+            receiveData(await handleSingle(data, zip), filename)
         } else if (type === 'multiple') {
-            receiveData(handleMultiple(data), filename)
+            receiveData(await handleMultiple(data, zip), filename)
         }
     }
 }
 
-function handleSingle(data: any) {
+async function handleSingle(data: any, zip: JSZip) {
     const correctResponseId = data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value']._text;
     const answers = data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction']['imsqti:simpleChoice'];
+    const imgdata = await getImages(data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'], zip);
     return `
     <question type="multichoice">
         <name>
@@ -99,7 +101,9 @@ function handleSingle(data: any) {
         <questiontext format="html">
             <text>
                 <![CDATA[${fixQuestion(data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction']['imsqti:prompt']['imsqti:span']
-        .map((span: any) => span._text).filter((val: any) => val).join('\n\n').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>'))}]]></text>
+        .map((span: any) => span._text).filter((val: any) => val).join('\n\n').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>'))}
+                ${imgdata[1]}]]></text>
+                ${imgdata[0]}
         </questiontext>
         <defaultgrade>1.0000000</defaultgrade>
         <penalty>0.3333333</penalty>
@@ -128,8 +132,9 @@ function handleSingle(data: any) {
     </question>`
 }
 
-function handleMultiple(data: any) {
+async function handleMultiple(data: any, zip: JSZip) {
     const matchInteraction = data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:matchInteraction'];
+    const imgdata = await getImages(matchInteraction, zip);
     const question = matchInteraction['imsqti:prompt']['imsqti:span'][1]._text;
     const choices = matchInteraction['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice'];
     const solutions = data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value'];
@@ -145,7 +150,8 @@ function handleMultiple(data: any) {
                 <text>${(data['imsqti:assessmentItem']._attributes.title)}</text>
             </name>
             <questiontext format="html">
-                <text><![CDATA[${fixQuestion(question)}]]></text>
+                <text><![CDATA[${fixQuestion(question)}${imgdata[1]}]]></text>
+                ${imgdata[0]}
             </questiontext>
             <defaultgrade>2.0000000</defaultgrade>
             <penalty>0.3333333</penalty>
@@ -184,7 +190,8 @@ ${Array.from(new Array(4).keys()).map((_val, index: number) =>
     `
 }
 
-function handleClozes(data: any) {
+async function handleClozes(data: any, zip: JSZip) {
+    let files: any = []
     return `
     <question type="cloze">
         <name>
@@ -197,20 +204,29 @@ function handleClozes(data: any) {
             ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']?._text}
             </br>
             </br>
-    ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map((responseDeclaration: any, index: number) => {
+    ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map(async (responseDeclaration: any, index: number) => {
         if (responseDeclaration._attributes.cardinality === 'multiple') {
             return `
         <u>Teilfrage ${index + 1}:</u></br></br>
-        ${handleMultipleCloze(data, responseDeclaration._attributes.identifier)}
+        ${await (async () => {
+                const qdata = await handleMultipleCloze(data, responseDeclaration._attributes.identifier, zip)
+                files.push(qdata[1]);
+                return qdata[0];
+            })()}
         </br>`
         } else if (responseDeclaration._attributes.cardinality === 'single') {
             return `
         <u>Teilfrage ${index + 1}:</u></br></br>
-        ${handleSingleCloze(data, responseDeclaration._attributes.identifier)}
+        ${await (async () => {
+                const qdata = await handleSingleCloze(data, responseDeclaration._attributes.identifier, zip);
+                files.push(qdata[1]);
+                return qdata[0];
+            })()}
         </br>`
         }
         return '';
     }).join('\n')}]]></text>
+            ${files.join('\n')}
         </questiontext>
         <generalfeedback format="moodle_auto_format">
           <text></text>
@@ -220,7 +236,7 @@ function handleClozes(data: any) {
     </question>`
 }
 
-function handleSingleCloze(data: any, id: any) {
+async function handleSingleCloze(data: any, id: any, zip: JSZip) {
     const correctResponseId = data['imsqti:assessmentItem']['imsqti:responseDeclaration'].filter((obj: any) => obj._attributes.identifier === id)[0]['imsqti:correctResponse']['imsqti:value']._text;
     let choiceInteraction = data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction'];
     if (Array.isArray(choiceInteraction)) {
@@ -228,17 +244,19 @@ function handleSingleCloze(data: any, id: any) {
             interaction._attributes.responseIdentifier === id
         )[0]
     }
-    return `
+    const imgdata = await getImages(choiceInteraction, zip)
+    return [`
         <p dir="ltr" style="text-align: left;">
             ${fixQuestion(choiceInteraction['imsqti:prompt']['imsqti:span'][1]._text)}
+            ${imgdata[1]}
             <br>(Bitte kreuzen Sie eine Antwort an!)
         </p>
         <p dir="ltr" style="text-align: left;">
             {1:MCVS:${choiceInteraction['imsqti:simpleChoice'].map((choice: any) => `~${choice._attributes.identifier === correctResponseId ? '%100%' : ''}&amp;nbsp;&amp;nbsp;${choice._text}`).join('')}}<br>
-        </p>`
+        </p>`, imgdata[0]]
 }
 
-function handleMultipleCloze(data: any, id: any) {
+async function handleMultipleCloze(data: any, id: any, zip: JSZip) {
     const correctResponseIds = data['imsqti:assessmentItem']['imsqti:responseDeclaration'].filter((response: any) =>
         response._attributes.identifier === id
     )[0]['imsqti:correctResponse']['imsqti:value'].map((obj: any) => obj._text);
@@ -250,6 +268,8 @@ function handleMultipleCloze(data: any, id: any) {
         )[0]
     }
 
+    const imgdata = await getImages(matchInteraction, zip)
+
     const answers = matchInteraction['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice']
         .map((obj: any) => [
             obj._text,
@@ -260,7 +280,7 @@ function handleMultipleCloze(data: any, id: any) {
     const questionText = matchInteraction['imsqti:prompt']['imsqti:span'][1]._text;
     const kprimCode = calcKprimCode(answers.map((obj: any) => obj[1] ? 1 : 0).join(''))
 
-    return `
+    return [`
     <!--
     Copyright 2021 by Dominique Bauer.
     Creative Commons CC0 1.0 Universal Public Domain Dedication.
@@ -328,6 +348,8 @@ function handleMultipleCloze(data: any, id: any) {
     
     ${fixQuestion(questionText)}
     </br>
+    ${imgdata[1]}
+    </br>
     (Bitte entscheiden Sie bei jeder Aussage, ob diese zutrifft oder nicht!)
     </br>
     </br>
@@ -353,15 +375,34 @@ function handleMultipleCloze(data: any, id: any) {
         </tr>`
     ).join('\n')}
     </table>
-    <span id="mf${random}-kprime">${kprimCode}</span></br></br>`
+    <span id="mf${random}-kprime">${kprimCode}</span></br></br>`, imgdata[0]]
+}
+
+async function getImages(interaction: any, zip: JSZip) {
+    if (interaction['imsqti:prompt']['imsqti:span'][1]['imsqti:img']) {
+        const name = interaction['imsqti:prompt']['imsqti:span'][1]['imsqti:img']._attributes.src;
+        const buffer = await zip.file(name)?.async('arraybuffer');
+
+        if (buffer !== undefined) {
+            var binary = '';
+            var bytes = new Uint8Array(buffer);
+            var len = bytes.byteLength;
+            for (var i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return [`<file name="${name.split('/')[1]}" path="/" encoding="base64">${window.btoa(binary)}</file>`,
+                `<img src="@@PLUGINFILE@@/${name.split('/')[1]}">`]
+        }
+    }
+    return ['', '']
 }
 
 function fixQuestion(question: string) {
     const list = ['nicht', 'kein', 'wenigsten']
     const split = question.split('.');
-    split[split.length-1] = split[split.length-1].split(' ').map(word => {
-        if (list.filter(listword => word.includes(listword)).length===1)
-            return '<b>'+word+'</b>'
+    split[split.length - 1] = split[split.length - 1].split(' ').map(word => {
+        if (list.filter(listword => word.includes(listword)).length === 1)
+            return '<b>' + word + '</b>'
         else
             return word
     }).join(' ')
