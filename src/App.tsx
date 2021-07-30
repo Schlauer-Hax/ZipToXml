@@ -4,6 +4,7 @@ import React, {useCallback, useState} from 'react'
 import {useDropzone} from 'react-dropzone'
 import readFiles from './ZipReader'
 import {Button} from "@material-ui/core";
+import GithubCorner from "react-github-corner";
 
 function App() {
     const onDrop = useCallback(acceptedFiles => {
@@ -15,8 +16,8 @@ function App() {
 
     return (
         <div className="App">
-
             <header className="App-header">
+                <GithubCorner href="https://github.com/Schlauer-Hax/ZipToXml/" />
                 <div {...getRootProps()}>
                     <img src={logo} className="App-logo" alt="logo"/>
                     <input {...getInputProps()} />
