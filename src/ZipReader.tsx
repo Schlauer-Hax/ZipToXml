@@ -96,7 +96,7 @@ async function handleSingle(data: any, zip: JSZip) {
     return `
     <question type="multichoice">
         <name>
-            <text>${data['imsqti:assessmentItem']._attributes.title}</text>
+            <text><![CDATA[${data['imsqti:assessmentItem']._attributes.title}]]></text>
         </name>
         <questiontext format="html">
             <text>
@@ -147,7 +147,7 @@ async function handleMultiple(data: any, zip: JSZip) {
     return `
         <question type="kprime">
             <name>
-                <text>${(data['imsqti:assessmentItem']._attributes.title)}</text>
+                <text><![CDATA[${(data['imsqti:assessmentItem']._attributes.title)}]]></text>
             </name>
             <questiontext format="html">
                 <text><![CDATA[${fixQuestion(question)}${imgdata[1]}]]></text>
@@ -195,7 +195,7 @@ async function handleClozes(data: any, zip: JSZip) {
     return `
     <question type="cloze">
         <name>
-          <text>Fall ${data['imsqti:assessmentItem']._attributes.title}</text>
+          <text><![CDATA[Fall ${data['imsqti:assessmentItem']._attributes.title}]]></text>
         </name>
         <questiontext format="html">
           <text><![CDATA[
