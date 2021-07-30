@@ -391,7 +391,7 @@ async function getImages(interaction: any, zip: JSZip) {
                 binary += String.fromCharCode(bytes[i]);
             }
             return [`<file name="${name.split('/')[1]}" path="/" encoding="base64">${window.btoa(binary)}</file>`,
-                `</br><img src="@@PLUGINFILE@@/${name.split('/')[1]}">`]
+                `</br></br><img src="@@PLUGINFILE@@/${name.split('/')[1]}">`]
         }
     }
     return ['', '']
