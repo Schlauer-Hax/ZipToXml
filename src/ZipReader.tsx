@@ -101,7 +101,7 @@ async function handleSingle(data: any, zip: JSZip) {
         <questiontext format="html">
             <text>
                 <![CDATA[${fixQuestion(data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:choiceInteraction']['imsqti:prompt']['imsqti:span']
-        .map((span: any) => span._text).filter((val: any) => val).join('\n\n').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>'))}
+        .map((span: any) => span._text).filter((val: any) => val).join('</br></br>').replaceAll('<neg>', '<strong>').replaceAll('</neg>', '</strong>'))}
                 ${imgdata[1]}]]></text>
                 ${imgdata[0]}
         </questiontext>
@@ -135,7 +135,7 @@ async function handleSingle(data: any, zip: JSZip) {
 async function handleMultiple(data: any, zip: JSZip) {
     const matchInteraction = data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:matchInteraction'];
     const imgdata = await getImages(matchInteraction, zip);
-    const question = matchInteraction['imsqti:prompt']['imsqti:span'][1]._text;
+    const question = matchInteraction['imsqti:prompt']['imsqti:span'].map((span: any) => span._text).filter((val: any) => val).join('</br></br>');
     const choices = matchInteraction['imsqti:simpleMatchSet'][0]['imsqti:simpleAssociableChoice'];
     const solutions = data['imsqti:assessmentItem']['imsqti:responseDeclaration']['imsqti:correctResponse']['imsqti:value'];
     const answers = choices.map((obj: any) => [
