@@ -1,9 +1,9 @@
 import logo from './logo.svg';
 import './App.css';
-import React, {useCallback, useState} from 'react'
+import {useCallback, useState} from 'react'
 import {useDropzone} from 'react-dropzone'
 import readFiles from './ZipReader'
-import {Button} from "@material-ui/core";
+import {Button} from "@mui/material";
 import GithubCorner from "react-github-corner";
 
 function App() {

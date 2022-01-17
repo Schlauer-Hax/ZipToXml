@@ -1,36 +1,23 @@
 {
     "name": "ziptoxmlweb2",
-    "version": "0.1.0",
-    "private": true,
+    "version": "2.0.0",
     "dependencies": {
-        "@material-ui/core": "^4.12.2",
-        "@testing-library/jest-dom": "^5.14.1",
-        "@testing-library/react": "^11.2.7",
-        "@testing-library/user-event": "^12.8.3",
-        "@types/material-ui": "^0.21.9",
-        "file-type": "^16.5.2",
-        "jszip": "^3.7.0",
+        "@types/react": "^17.0.38",
+        "@types/react-dom": "^17.0.11",
+        "@mui/material": "^5.2.8",
+        "buffer": "^6.0.3",
+        "jszip": "^3.7.1",
         "react": "^17.0.2",
-        "react-bootstrap": "^1.6.1",
-        "react-code-blocks": "*",
         "react-dom": "^17.0.2",
-        "react-dropzone": "^11.3.4",
+        "react-dropzone": "^11.5.1",
         "react-github-corner": "^2.5.0",
-        "react-scripts": "4.0.3",
-        "web-vitals": "^1.1.2",
+        "react-scripts": "5.0.0",
+        "stream": "^0.0.2",
         "xml-js": "^1.6.11"
     },
     "scripts": {
-        "start": "react-scripts --openssl-legacy-provider start",
-        "build": "react-scripts --openssl-legacy-provider build",
-        "test": "react-scripts test",
-        "eject": "react-scripts eject"
-    },
-    "eslintConfig": {
-        "extends": [
-            "react-app",
-            "react-app/jest"
-        ]
+        "start": "react-scripts start",
+        "build": "react-scripts build"
     },
     "browserslist": {
         "production": [
@@ -43,9 +30,5 @@
             "last 1 firefox version",
             "last 1 safari version"
         ]
-    },
-    "devDependencies": {
-        "@types/react": "^17.0.15",
-        "@types/react-dom": "^17.0.9"
     }
 }
