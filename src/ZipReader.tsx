@@ -201,7 +201,7 @@ async function handleClozes(data: any, zip: JSZip) {
           <text><![CDATA[
             <u>Fallbeschreibung mit ${data['imsqti:assessmentItem']['imsqti:responseDeclaration'].length} Teilfragen:</u>
             </br>
-            ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']?._text}
+            ${data['imsqti:assessmentItem']['imsqti:itemBody']['imsqti:p']?._text.replaceAll('\n', '</br>')}
             </br>
             </br>
     ${(await Promise.all(data['imsqti:assessmentItem']['imsqti:responseDeclaration'].map(async (responseDeclaration: any, index: number) => {
@@ -247,6 +247,7 @@ async function handleSingleCloze(data: any, id: any, zip: JSZip) {
     const imgdata = await getImages(choiceInteraction, zip)
     return [`
         <p dir="ltr" style="text-align: left;">
+            ${choiceInteraction['imsqti:prompt']['imsqti:span'][0]._text ? choiceInteraction['imsqti:prompt']['imsqti:span'][0]._text.replaceAll('\n', '</br>')+'</br></br>' : ''}
             ${fixQuestion(choiceInteraction['imsqti:prompt']['imsqti:span'][1]._text)}
             ${imgdata[1]}
             <br>(Bitte kreuzen Sie eine Antwort an!)
@@ -391,7 +392,7 @@ async function getImages(interaction: any, zip: JSZip) {
                 binary += String.fromCharCode(bytes[i]);
             }
             return [`<file name="${name.split('/')[1]}" path="/" encoding="base64">${window.btoa(binary)}</file>`,
-                `</br></br><img src="@@PLUGINFILE@@/${name.split('/')[1]}">`]
+                `</br></br><img width="100%" src="@@PLUGINFILE@@/${name.split('/')[1]}">`]
         }
     }
     return ['', '']
